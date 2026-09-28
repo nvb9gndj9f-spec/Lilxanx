@@ -52,22 +52,29 @@ SEGS = [
     ("black", 2.0),
 ]
 
-ENC = ["-c:v", "libx264", "-preset", "medium", "-crf", "16", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an"]
+ENC = ["-c:v", "libx264", "-preset", "medium", "-crf", "12", "-pix_fmt", "yuv420p", "-r", str(FPS), "-an"]
 
 
 def run(cmd):
     subprocess.run(cmd, check=True)
 
 
+def soft_zoom(z):
+    # zoom piu' contenuti: meno pixel persi, immagine piu' definita (min 1.07 per la scritta)
+    return round(1.07 + (z - 1.07) * 0.4, 4)
+
+
 def clip(i, a, b, speed, z0, z1):
+    z0, z1 = soft_zoom(z0), soft_zoom(z1)
     dur = (b - a) / speed
     n = max(1, round(dur * FPS))
     # zoom lineare per frame; finestra centrata in orizzontale, bordo basso <= 93.5% dell'altezza
     z = f"{z0}+({z1}-{z0})*on/{max(n - 1, 1)}"
-    vf = (f"trim=start={a}:end={b},setpts=(PTS-STARTPTS)/{speed},fps={FPS},{GRADE},"
-          f"scale={W*2}:{H*2}:flags=lanczos,"
+    vf = (f"trim=start={a}:end={b},setpts=(PTS-STARTPTS)/{speed},"
+          f"hqdn3d=1.2:1.2:4:4,nlmeans=s=1.5:p=5:r=11,fps={FPS},{GRADE},"
+          f"scale={W*2}:{H*2}:flags=spline+accurate_rnd+full_chroma_int,"
           f"zoompan=z='{z}':x='(iw-iw/zoom)/2':y='max(0,ih*0.935-ih/zoom)':d=1:s={W}x{H}:fps={FPS},"
-          f"unsharp=5:5:0.35,setsar=1,trim=end_frame={n}")
+          f"deband,cas=0.55,setsar=1,trim=end_frame={n}")
     out = f"{OUT}/{i:02d}.mp4"
     run([FF, "-v", "error", "-y", "-i", SRC, "-vf", vf, *ENC, out])
     return out, n / FPS
