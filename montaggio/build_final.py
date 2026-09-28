@@ -39,7 +39,7 @@ titles = [
 ]
 
 inputs = ["-i", f"{S}/video_noaudio.mp4", "-i", f"{S}/mix.wav"]
-fc = ["[0:v]noise=alls=3:allf=t+u,vignette=angle=PI/5.5[v0]"]
+fc = ["[0:v]noise=alls=2:allf=t+u,vignette=angle=PI/5.5[v0]"]
 last = "v0"
 for k, (png, t0, t1, fd) in enumerate(titles):
     inputs += ["-loop", "1", "-framerate", "24", "-t", f"{t1 - t0}", "-i", png]
@@ -52,7 +52,7 @@ fc.append(f"[{last}]fade=in:st=0:d=0.15,format=yuv420p[vout]")
 
 out = f"{S}/sopra_l_acqua_wingfoil.mp4"
 subprocess.run([FF, "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc),
-                "-map", "[vout]", "-map", "1:a", "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-maxrate", "16M", "-bufsize", "32M", "-tune", "film",
-                "-profile:v", "high", "-r", "24", "-c:a", "aac", "-b:a", "256k", "-shortest",
+                "-map", "[vout]", "-map", "1:a", "-c:v", "libx264", "-preset", "slower", "-crf", "19", "-maxrate", "8M", "-bufsize", "16M", "-tune", "film",
+                "-profile:v", "high", "-r", "24", "-c:a", "aac", "-b:a", "192k", "-shortest",
                 "-movflags", "+faststart", out], check=True)
 print(out)
